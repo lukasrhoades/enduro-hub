@@ -24,7 +24,7 @@ def get_data_active(race):
 
     # Expand view
     dropdown = WebDriverWait(browser, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div[1]/div[3]/div[3]/div/div/div/div/div/div[1]/div/div[1]/div/div[3]/div/div/button/span[1]"))
+        EC.element_to_be_clickable((By.XPATH, "//span[text()='Top 10']"))
         )
     dropdown.click()
 
@@ -71,41 +71,41 @@ def get_data_active(race):
             ).text
         try:
             swim = WebDriverWait(browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//ul[@class='summary-result-list']/li[1]//div[contains(@class, 'col-12 col-sm-3')]//div[@class='result-cell-content']"))
+                EC.presence_of_element_located((By.XPATH, get_xpath_active("leg", 1)))
                 ).text
             bike = WebDriverWait(browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//ul[@class='summary-result-list']/li[2]//div[contains(@class, 'col-12 col-sm-3')]//div[@class='result-cell-content']"))
+                EC.presence_of_element_located((By.XPATH, get_xpath_active("leg", 2)))
                 ).text
             run = WebDriverWait(browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//ul[@class='summary-result-list']/li[3]//div[contains(@class, 'col-12 col-sm-3')]//div[@class='result-cell-content']"))
+                EC.presence_of_element_located((By.XPATH, get_xpath_active("leg", 3)))
                 ).text
             t1 = WebDriverWait(browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//ul[@class='transition-result-list']/li[1]//div[@class='transition-stage-result__split-time']"))
+                EC.presence_of_element_located((By.XPATH, get_xpath_active("transition", 1)))
                 ).text
             t2 = WebDriverWait(browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//ul[@class='transition-result-list']/li[2]//div[@class='transition-stage-result__split-time']"))
+                EC.presence_of_element_located((By.XPATH, get_xpath_active("transition", 2)))
                 ).text
         except:
             temp = pd.DataFrame(
-            {"Name": name,
-            "Gender": gender,
-            "Age": age,
-            "Total": chip},
-            index=[0]
-            )
+                {"Name": name,
+                "Gender": gender,
+                "Age": age,
+                "Total": chip},
+                index=[0]
+                )
         else:
             temp = pd.DataFrame(
                 {"Name": name,
                 "Gender": gender,
                 "Age": age,
-                "Total": chip,
                 "Swim": swim,
-                "Bike": bike,
-                "Run": run,
                 "T1": t1,
-                "T2": t2},
+                "Bike": bike,
+                "T2": t2,
+                "Run": run,
+                "Total": chip},
                 index=[0]
-            )
+                )
         
         if data.empty:
             data = temp
@@ -114,3 +114,17 @@ def get_data_active(race):
     
     browser.quit()
     return data
+
+
+def get_xpath_active(type, i):
+    """Fetches XPATH for desired split"""
+    if type == "leg":
+        return f"""
+        //ul[@class='summary-result-list']/li[{i}]
+        //span[contains(text(), 'Split time')]/../../div[contains(@class, 'result-cell-content')]
+        """
+    elif type == "transition":
+        return f"""
+        //ul[@class='transition-result-list']/li[{i}]
+        //div[@class='transition-stage-result__split-time']
+        """
