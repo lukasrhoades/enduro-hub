@@ -142,20 +142,18 @@ def to_timedelta(df):
                       "Total": "timedelta64[s]"})
 
 
-def get_histograms(race, gender):
+def get_histograms(df, title):
     """Provides histograms for each leg of given race"""
     import matplotlib.pyplot as plt
     import random
-
-    # Grab subset of data based on input
-    df = race[race.Gender == gender].copy()
 
     # Convert to timedelta and then seconds
     df_timedelta = to_timedelta(df)
     df_seconds = df_timedelta.apply(lambda col: col.dt.total_seconds() if col.dtype == "timedelta64[s]" else col)
     
     fig, ax = plt.subplots(nrows=6, ncols=1, figsize=(8, 12))
-    for i, column in enumerate(df_seconds.columns[3:]):
+    columns = ["Swim", "T1", "Bike", "T2", "Run", "Total"]
+    for i, column in enumerate(columns):
         # Drop outliers
         Q1 = df_seconds[column].quantile(0.25)
         Q3 = df_seconds[column].quantile(0.75)
@@ -188,15 +186,29 @@ def get_histograms(race, gender):
             xmin_pos = int(xmin / interval) + 1
             # Determine positions of each tick
             positions = [x * interval for x in range(xmin_pos, xmin_pos + count + 1)]
+            if xmax < 6060:
+                if len(positions) > 75:  # Label every seven ticks if tons of ticks
+                    labels = tick_setter(7, positions)
+                elif len(positions) > 50:  # Label every five ticks if many ticks
+                    labels = tick_setter(5, positions)
+                elif len(positions) > 20:  # Label every three ticks if too many ticks
+                    labels = tick_setter(3, positions)
+                elif len(positions) > 10: # Two for moderate number of ticks
+                    labels = tick_setter(2, positions)
+                else:  # Otherwise label every tick
+                    labels = tick_setter(1, positions)
+            else:  # Means dealing w/ 3 digit tickers
+                if len(positions) > 75:  # Label every ten ticks if tons of ticks
+                    labels = tick_setter(10, positions)
+                elif len(positions) > 50:  # Label every seven ticks if many ticks
+                    labels = tick_setter(7, positions)
+                elif len(positions) > 20:  # Label every five ticks if too many ticks
+                    labels = tick_setter(5, positions)
+                elif len(positions) > 10: # Three for moderate number of ticks
+                    labels = tick_setter(3, positions)
+                else:  # Otherwise label every tick
+                    labels = tick_setter(1, positions)
             #fig.autofmt_xdate()
-            if len(positions) > 50:  # Label every five ticks if too many ticks
-                labels = [f"{x // 60}:{x % 60:02}" if i % 5 == 0 else " " for i, x in enumerate(positions)]
-            elif len(positions) > 20:  # Label every three ticks if too many ticks
-                labels = [f"{x // 60}:{x % 60:02}" if i % 3 == 0 else " " for i, x in enumerate(positions)]
-            elif len(positions) > 10: # Two for moderate number of ticks
-                labels = [f"{x // 60}:{x % 60:02}" if i % 2 == 0 else " " for i, x in enumerate(positions)]
-            else:  # Otherwise label every tick
-                labels = [f"{x // 60}:{x % 60:02}" for x in positions]
             ax[i].set_xticks(positions)
             ax[i].set_xticklabels(labels)
             ax[i].set_xlabel("Minutes")
@@ -206,15 +218,15 @@ def get_histograms(race, gender):
         ax[i].set_title(column)
         ax[i].set_ylabel("Athlete Count")
 
-    # Set title
-    if gender == "Female":
-        title = "Women's Race"
-    if gender == "Male":
-        title = "Men's Race"
     fig.suptitle(title)
 
     plt.tight_layout()
     plt.show()
+
+
+def tick_setter(spacing, positions):
+    """Fetches tick spacing"""
+    return [f"{x // 60}:{x % 60:02}" if i % spacing == 0 else " " for i, x in enumerate(positions)]
 
 
 def get_position(df):
