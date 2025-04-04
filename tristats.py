@@ -312,7 +312,7 @@ def get_place_chart(df, competitor):
     pos_bike = comp_loc["Position 2"].values[0] - comp_loc["Position 3"].values[0]
     pos_t2 = comp_loc["Position 3"].values[0] - comp_loc["Position 4"].values[0]
     pos_r = comp_loc["Position 4"].values[0] - comp_loc["Final Position"].values[0]
-    positions = ["Run", f"T1 ({pos_t1})", f"Bike ({pos_bike})", f"T2 ({pos_t2})", f"Swim ({pos_r})"]
+    positions = ["Swim", f"T1 ({pos_t1})", f"Bike ({pos_bike})", f"T2 ({pos_t2})", f"Run ({pos_r})"]
 
     # Set up title and y-axis label
     ax.set_title(competitor)
