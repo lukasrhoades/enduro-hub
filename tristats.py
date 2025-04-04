@@ -239,7 +239,8 @@ def get_position(df):
     df = to_timedelta(df)
     
     # For each split column calculate the athlete's position in the race after that split 
-    for i, column in enumerate(df.columns[3:7]):
+    columns = ["Swim", "T1", "Bike", "T2", "Run", "Total"]
+    for i, column in enumerate(columns):
         # Find their cumulative time at that point in time
         if f"Overall Time {i}" in df.columns:
             df[f"Overall Time {i+1}"] = df[column] + df[f"Overall Time {i}"]
@@ -261,7 +262,7 @@ def get_position(df):
     df["Final Gap"] = df["Final Gap"].dt.total_seconds().astype(int)
 
     # Drop split columns 
-    df.drop(columns=["Run1", "T1", "Bike", "T2", "Run2"], inplace=True)
+    df.drop(columns=["Swim", "T1", "Bike", "T2", "Run"], inplace=True)
 
     return df
 
@@ -338,7 +339,7 @@ def get_place_chart(df, competitor):
 
 def change_label(labels, values):
     """Changes label green if improve place, red if lose places"""
-    for i, label in enumerate(labels):
+    for i, label in enumerate(labels[1:]):
         if values[i] > 0:
             label.set_color("green")
         elif values[i] < 0:
