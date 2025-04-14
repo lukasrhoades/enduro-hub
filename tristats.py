@@ -97,7 +97,6 @@ class trirace():
                 EC.presence_of_element_located((By.CLASS_NAME, "personal-info__detail"))
                 ).text
             gender = bio.split("|")[0].strip()
-            age = re.findall(r"\d+", bio)[0]
             chip = WebDriverWait(browser, 10).until(
                 EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Chip time')]/following-sibling::div//span"))
                 ).text
@@ -121,7 +120,6 @@ class trirace():
                 temp = pd.DataFrame(
                     {"Name": name,
                     "Gender": gender,
-                    "Age": age,
                     "Total": chip},
                     index=[0]
                     )
@@ -129,7 +127,6 @@ class trirace():
                 temp = pd.DataFrame(
                     {"Name": name,
                     "Gender": gender,
-                    "Age": age,
                     self.leg1: leg1,
                     self.t1: t1,
                     self.leg2: leg2,
