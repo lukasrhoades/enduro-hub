@@ -10,19 +10,21 @@ class trirace():
         self.leg2 = "Bike"
         self.t2 = "T2"
         self.leg3 = "Run"
+        self.end = "Total"
 
     def set_data(self, data):
         """Method to set data"""
         import pandas as pd
         self.data = pd.DataFrame(data)
 
-    def set_legs(self, leg1="Swim", t1="T1", leg2="Bike", t2="T2", leg3="Run"):
+    def set_legs(self, leg1="Swim", t1="T1", leg2="Bike", t2="T2", leg3="Run", end="Total"):
         """Method to modify names of legs"""
         self.leg1 = leg1
         self.t1 = t1
         self.leg2 = leg2
         self.t2 = t2
         self.leg3 = leg3
+        self.end = end
     
     def get_gender(self, gender):
         """Returns race data for one gender"""
@@ -151,7 +153,7 @@ class trirace():
         import random
         
         # Convert to timedelta and then seconds
-        columns = [self.leg1, self.t1, self.leg2, self.t2, self.leg3, "Total"]
+        columns = [self.leg1, self.t1, self.leg2, self.t2, self.leg3, self.end]
         df_timedelta = to_timedelta(self.data, columns)
         df_seconds = df_timedelta.apply(lambda col: col.dt.total_seconds() if col.dtype == "timedelta64[s]" else col)
         
@@ -233,7 +235,7 @@ class trirace():
         df.dropna(inplace=True)
         
         # Convert splits to timedelta
-        columns = [self.leg1, self.t1, self.leg2, self.t2, self.leg3, "Total"]
+        columns = [self.leg1, self.t1, self.leg2, self.t2, self.leg3, self.end]
         df = to_timedelta(df, columns)
         
         # For each split column calculate the athlete's position in the race after that split 
@@ -252,14 +254,12 @@ class trirace():
             df[f"Gap Time {i+1}"] = df[f"Gap Time {i+1}"].dt.total_seconds().astype(int)
         # Do same calculation for final time which was already provided
         df["Final Time"] = df.pop("Total")
+        self.end = "Final Time"
         df.sort_values(by="Final Time", inplace=True)
         df.reset_index(drop=True, inplace=True)
         df["Final Position"] = df.index + 1
         df["Final Gap"] = df["Final Time"] - df[f"Final Time"].min()
         df["Final Gap"] = df["Final Gap"].dt.total_seconds().astype(int)
-
-        # Drop split columns 
-        df.drop(columns=[self.leg1, self.t1, self.leg2, self.t2, self.leg3], inplace=True)
 
         self.data = df
 
@@ -277,7 +277,11 @@ class trirace():
 
         # For each split, normalize the gaps such that the position matches the gap time
         for i, gap in enumerate(gaps):
-            position = df[positions[i]].loc[df.index == competitor].values[0]
+            try:
+                position = df[positions[i]].loc[df.index == competitor].values[0]
+            except IndexError:  # Incomplete split data
+                plt.close(fig)
+                return
             df[gap] = (df[gap] - df[gap].min()) / (df[gap].max() - df[gap].min())
             if df[gap].loc[df.index == competitor].values[0] == 0:
                 # If leading, scale competitor to correct position and last place to last position
@@ -337,14 +341,14 @@ class trirace():
         import matplotlib.pyplot as plt
 
         # Convert and clean data
-        columns = [self.leg1, self.t1, self.leg2, self.t2, self.leg3, "Total"]
+        columns = [self.leg1, self.t1, self.leg2, self.t2, self.leg3, self.end]
         df = to_timedelta(self.data, columns)
         df.dropna(inplace=True)
 
         # Calculate and plot regression for each leg
         legs = [self.leg1, self.t1, self.leg2, self.t2, self.leg3]
         for leg in legs:
-            lin_reg(df, leg)
+            lin_reg(df, leg, self.end)
 
         # Show legend and plot labels
         plt.legend();
@@ -391,7 +395,7 @@ def change_label(labels, values):
             label.set_color("red")
 
 
-def lin_reg(df, leg):
+def lin_reg(df, leg, final):
     """Plots linear regression between a leg in race and total time"""
     import numpy as np
     import random
@@ -401,7 +405,7 @@ def lin_reg(df, leg):
 
     # Assign data 
     x = np.array(df[leg].dt.total_seconds())
-    y = np.array(df.Total.dt.total_seconds())
+    y = np.array(df[final].dt.total_seconds())
     color = (random.random(), random.random(), random.random())  # Random color
 
     # Train model
